@@ -68,11 +68,6 @@ def create_email_message(tenant_id: str, sender: str,
     return msg.as_mime()
 
 
-def set_tenant_id(tenant_id: str, msg: EmailMessage) -> None:
-    """Set the FileTrust tenant ID of an email message."""
-    msg["X-FileTrust-Tenant"] = tenant_id
-
-
 async def main(req: func.HttpRequest) -> func.HttpResponse:
     """Entry point of the Azure function."""
     logging.info('Python HTTP trigger function processed a request.')
@@ -109,7 +104,6 @@ async def main(req: func.HttpRequest) -> func.HttpResponse:
     logging.info("Creating email to send...")
     msg_to_send = create_email_message(req_body.tenant_id, req_body.sender,
                                        req_body.recipient)
-    set_tenant_id(req_body.tenant_id, msg_to_send)
 
     logging.info("Sending email to endpoint '%s:%d'...", req_body.endpoint,
                  req_body.port)
