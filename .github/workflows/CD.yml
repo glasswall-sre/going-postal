@@ -16,6 +16,7 @@ jobs:
       - name: Install dependencies
         run: |
           pip install -U pip pipenv
+          pipenv sync --dev
       - name: Freeze requirements
         run: |
           pipenv run freeze
@@ -27,7 +28,7 @@ jobs:
         run: |
           npm install
       - name: Serverless deploy to westeurope
-        uses: serverless/github-action@master
+        uses: serverless/github-action@v1.53.0
         with:
           args: deploy --region westeurope
         env:
@@ -36,7 +37,7 @@ jobs:
           AZURE_SUBSCRIPTION_ID: ${{ secrets.ENTERPRISE_DEV_SUBSCRIPTION_ID }}
           AZURE_TENANT_ID: ${{ secrets.PULUMI_AZURE_TENANT_ID }}
       - name: Serverless deploy to uksouth
-        uses: serverless/github-action@master
+        uses: serverless/github-action@v1.53.0
         with:
           args: deploy --region uksouth
         env:
