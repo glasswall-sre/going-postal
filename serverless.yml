@@ -1,0 +1,39 @@
+service: going-postal
+
+provider:
+  name: azure
+  region: ${opt:region}
+  runtime: python3.8 # python3.7 or python3.8 available
+  # prefix: "sample"  # prefix of generated resource name
+  # subscriptionId: A356AC8C-E310-44F4-BF85-C7F29044AF99
+  # stage: dev
+  # type: premium  # premium azure functions
+
+plugins:
+  - serverless-azure-functions
+package:
+  include:
+    - data/**
+  exclude:
+    - env/**
+    - .env/**
+    - local.settings.json
+    - .vscode/**
+    - __pycache__/**
+    - node_modules/**
+    - .python_packages/**
+    - .funcignore
+    - package.json
+    - package-lock.json
+    - .gitignore
+    - .git/**
+
+functions:
+  send:
+    handler: src/handlers/send.main
+    events:
+      - http: true
+        x-azure-settings:
+          methods:
+            - POST
+          authLevel: function

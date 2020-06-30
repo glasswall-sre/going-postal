@@ -1,0 +1,43 @@
+name: CD
+
+on:
+  release:
+    types: [created]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Set up Python
+        uses: actions/setup-python@v1
+        with:
+          python-version: "3.8"
+      - name: Install dependencies
+        run: |
+          pip install -U pip pipenv
+      - name: Freeze requirements
+        run: |
+          pipenv run freeze
+      - name: npm install
+        uses: actions/npm@master
+        with:
+          args: install
+      - name: Serverless deploy to westeurope
+        uses: serverless/github-action@master
+        with:
+          args: deploy --region westeurope
+        env:
+          AZURE_CLIENT_ID: ${{ secrets.PULUMI_AZURE_CLIENT_ID }}
+          AZURE_CLIENT_SECRET: ${{ secrets.PULUMI_AZURE_CLIENT_SECRET }}
+          AZURE_SUBSCRIPTION_ID: ${{ secrets.ENTERPRISE_DEV_SUBSCRIPTION_ID }}
+          AZURE_TENANT_ID: ${{ secrets.PULUMI_AZURE_TENANT_ID }}
+      - name: Serverless deploy to uksouth
+        uses: serverless/github-action@master
+        with:
+          args: deploy --region uksouth
+        env:
+          AZURE_CLIENT_ID: ${{ secrets.PULUMI_AZURE_CLIENT_ID }}
+          AZURE_CLIENT_SECRET: ${{ secrets.PULUMI_AZURE_CLIENT_SECRET }}
+          AZURE_SUBSCRIPTION_ID: ${{ secrets.ENTERPRISE_DEV_SUBSCRIPTION_ID }}
+          AZURE_TENANT_ID: ${{ secrets.PULUMI_AZURE_TENANT_ID }}
