@@ -19,10 +19,13 @@ jobs:
       - name: Freeze requirements
         run: |
           pipenv run freeze
-      - name: npm install
-        uses: actions/npm@master
+      - name: Setup node
+        uses: actions/setup-node@v1
         with:
-          args: install
+          node-version: "12"
+      - name: Install node dependencies
+        run: |
+          npm install
       - name: Serverless deploy to westeurope
         uses: serverless/github-action@master
         with:
