@@ -6,7 +6,7 @@ from typing import Any, Optional
 import aiosmtplib
 import azure.functions as func
 from marshmallow import Schema, fields, post_load, EXCLUDE, ValidationError
-from sremail import message
+from sremail import message, address
 
 
 class RequestBody:
@@ -17,11 +17,12 @@ class RequestBody:
         port (int): The port to send the SMTP message over.
         timeout (float): The timeout of the SMTP connection.
         tenant_id (str): The tenant ID of the SaaS tenant.
-        recipient (str): The email to send to.
-        sender (str): The email to send from.
+        recipient (Address): The email to send to.
+        sender (Address): The email to send from.
     """
     def __init__(self, endpoint: str, port: int, timeout: float,
-                 tenant_id: str, recipient: str, sender: str) -> None:
+                 tenant_id: str, recipient: address.Address,
+                 sender: address.Address) -> None:
         self.endpoint = endpoint
         self.port = port
         self.timeout = timeout
@@ -41,8 +42,8 @@ class RequestBodySchema(Schema):
         allow_nan=False,
     )
     tenant_id = fields.Str(required=True, allow_none=False)
-    recipient = fields.Str(required=True, allow_none=False)
-    sender = fields.Str(required=True, allow_none=False)
+    recipient = address.AddressField(required=True, allow_none=False)
+    sender = address.AddressField(required=True, allow_none=False)
 
     @post_load
     def make_request_body(self, data, **kwargs) -> RequestBody:
@@ -102,8 +103,9 @@ async def main(req: func.HttpRequest) -> func.HttpResponse:
         return func.HttpResponse(str(err), status_code=502)
 
     logging.info("Creating email to send...")
-    msg_to_send = create_email_message(req_body.tenant_id, req_body.sender,
-                                       req_body.recipient)
+    msg_to_send = create_email_message(req_body.tenant_id,
+                                       req_body.sender.email,
+                                       req_body.recipient.email)
 
     logging.info("Sending email to endpoint '%s:%d'...", req_body.endpoint,
                  req_body.port)
