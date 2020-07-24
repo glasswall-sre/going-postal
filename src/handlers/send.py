@@ -16,17 +16,17 @@ class RequestBody:
         endpoint (str): The SMTP endpoint to send to.
         port (int): The port to send the SMTP message over.
         timeout (float): The timeout of the SMTP connection.
-        tenant_id (str): The tenant ID of the SaaS tenant.
+        tenant_ids (str): The list of tenant ID/s of the SaaS tenant/s.
         recipient (Address): The email to send to.
         sender (Address): The email to send from.
     """
     def __init__(self, endpoint: str, port: int, timeout: float,
-                 tenant_id: str, recipient: address.Address,
+                 tenant_ids: str, recipient: address.Address,
                  sender: address.Address) -> None:
         self.endpoint = endpoint
         self.port = port
         self.timeout = timeout
-        self.tenant_id = tenant_id
+        self.tenant_ids = tenant_ids
         self.recipient = recipient
         self.sender = sender
 
@@ -41,7 +41,7 @@ class RequestBodySchema(Schema):
         default=None,
         allow_nan=False,
     )
-    tenant_id = fields.Str(required=True, allow_none=False)
+    tenant_ids = fields.List(fields.Str(required=True), allow_none=False)
     recipient = address.AddressField(required=True, allow_none=False)
     sender = address.AddressField(required=True, allow_none=False)
 
@@ -102,20 +102,21 @@ async def main(req: func.HttpRequest) -> func.HttpResponse:
         # if there was some error connecting, return a 502 bad gateway
         return func.HttpResponse(str(err), status_code=502)
 
-    logging.info("Creating email to send...")
-    msg_to_send = create_email_message(req_body.tenant_id,
-                                       req_body.sender.email,
-                                       req_body.recipient.email)
+    for tenant_id in req_body.tenant_ids:
+        logging.info(f"Creating email to send to {tenant_id}...")
+        msg_to_send = create_email_message(tenant_id,
+                                        req_body.sender.email,
+                                        req_body.recipient.email)
 
-    logging.info("Sending email to endpoint '%s:%d'...", req_body.endpoint,
-                 req_body.port)
-    try:
-        await smtp_conn.send_message(msg_to_send)
-    except Exception as err:
-        # if there was some error sending, return a 502 bad gateway
-        return func.HttpResponse(str(err), status_code=502)
+        logging.info("Sending email to endpoint '%s:%d'...", req_body.endpoint,
+                    req_body.port)
+        try:
+            await smtp_conn.send_message(msg_to_send)
+        except Exception as err:
+            # if there was some error sending, return a 502 bad gateway
+            return func.HttpResponse(str(err), status_code=502)
 
-    # sending the message was a success!
-    return func.HttpResponse(
-        f"Successfully sent to '{req_body.endpoint}:{req_body.port}'",
-        status_code=200)
+        # sending the message was a success!
+        return func.HttpResponse(
+            f"Successfully sent to '{req_body.endpoint}:{req_body.port}'",
+            status_code=200)
