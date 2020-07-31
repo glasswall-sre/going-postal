@@ -15,7 +15,7 @@ to be used with concurrency for load testing.
     "endpoint": "smtp.some-endpoint.com",
     "port": 25,
     "timeout": 3.5,
-    "tenant_id": "f45af6e4-4206-4e5b-8675-d4852a158dbf",
+    "tenant_id": ["f45af6e4-4206-4e5b-8675-d4852a158dbf"],
     "recipient": "someone@example.com",
     "sender": "someone_else@example.com"
 }
