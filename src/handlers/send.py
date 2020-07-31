@@ -7,6 +7,7 @@ import aiosmtplib
 import azure.functions as func
 from marshmallow import Schema, fields, post_load, EXCLUDE, ValidationError
 from sremail import message, address
+from typing import List
 
 
 class RequestBody:
@@ -16,12 +17,12 @@ class RequestBody:
         endpoint (str): The SMTP endpoint to send to.
         port (int): The port to send the SMTP message over.
         timeout (float): The timeout of the SMTP connection.
-        tenant_ids (str): The list of tenant ID/s of the SaaS tenant/s.
+        tenant_ids (List[str]): The list of tenant ID/s of the SaaS tenant/s.
         recipient (Address): The email to send to.
         sender (Address): The email to send from.
     """
     def __init__(self, endpoint: str, port: int, timeout: float,
-                 tenant_ids: str, recipient: address.Address,
+                 tenant_ids: List[str], recipient: address.Address,
                  sender: address.Address) -> None:
         self.endpoint = endpoint
         self.port = port
@@ -116,7 +117,7 @@ async def main(req: func.HttpRequest) -> func.HttpResponse:
             # if there was some error sending, return a 502 bad gateway
             return func.HttpResponse(str(err), status_code=502)
 
-        # sending the message was a success!
-        return func.HttpResponse(
-            f"Successfully sent to '{req_body.endpoint}:{req_body.port}'",
-            status_code=200)
+    # sending the message was a success!
+    return func.HttpResponse(
+        f"Successfully sent to '{req_body.endpoint}:{req_body.port}'",
+        status_code=200)
