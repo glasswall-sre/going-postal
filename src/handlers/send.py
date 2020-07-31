@@ -9,7 +9,6 @@ from marshmallow import Schema, fields, post_load, EXCLUDE, ValidationError
 from sremail import message, address
 from typing import List
 
-
 class RequestBody:
     """The body of a request to the send endpoint.
 
@@ -42,7 +41,7 @@ class RequestBodySchema(Schema):
         default=None,
         allow_nan=False,
     )
-    tenant_ids = fields.List(fields.Str(required=True), allow_none=False)
+    tenant_ids = fields.List(fields.Str(required=True), allow_none=False, validate=validate.Length(min=1))
     recipient = address.AddressField(required=True, allow_none=False)
     sender = address.AddressField(required=True, allow_none=False)
 
