@@ -18,6 +18,18 @@ to be used with concurrency for load testing.
     "tenant_id": ["f45af6e4-4206-4e5b-8675-d4852a158dbf"],
     "recipient": "someone@example.com",
     "sender": "someone_else@example.com"
+    "load": {
+            "distribution" : [
+                {
+                    "file": "data/test.png",
+                    "weight": 10.00
+                },
+                {
+                    "file": "data/test.bmp",
+                    "weight": 90.00
+                }
+            ]
+        }
 }
 ```
 All fields are required, with the exception of:
