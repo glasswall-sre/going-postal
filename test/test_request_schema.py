@@ -1,5 +1,5 @@
 import pytest
-from src.handlers.request_schema import parse_request_body
+from src.handlers.send import parse_request_body
 
 def test_parse_request_body():
     # Arrange
