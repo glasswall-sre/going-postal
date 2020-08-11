@@ -17,7 +17,7 @@ to be used with concurrency for load testing.
     "timeout": 3.5,
     "tenant_id": ["f45af6e4-4206-4e5b-8675-d4852a158dbf"],
     "recipient": "someone@example.com",
-    "sender": "someone_else@example.com"
+    "sender": "someone_else@example.com",
     "load": {
             "distribution" : [
                 {
