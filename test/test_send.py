@@ -1,6 +1,5 @@
 import pytest
-from src.handlers.attachment_randomiser import AttachmentRandomiser
-from src.handlers.request_schema import parse_request_body
+from src.handlers.send import AttachmentRandomiser, parse_request_body
 
 def test_attachment_randomiser_init():
     # Arrange
@@ -60,11 +59,11 @@ def test_select_random_attachment():
             "distribution" : [
                 {
                     "file": "data/test.png",
-                    "weight": 10.00
+                    "weight": 20.00
                 },
                 {
                     "file": "data/test.bmp",
-                    "weight": 90.00
+                    "weight": 80.00
                 }
             ]
         }
@@ -83,3 +82,31 @@ def test_select_random_attachment():
         selected[attachment] += 1
     # Assert
     assert selected.get("data/test.png") < selected.get("data/test.bmp")
+
+
+def test_parse_request_body():
+    # Arrange
+    body = {
+        "endpoint":"localhost",
+        "port":25,
+        "tenant_ids":["test", "test2"],
+        "sender":"test@test.com",
+        "recipient":"test@test.com",
+        "load":{
+            "distribution" : [
+                {
+                    "file": "data/test.png",
+                    "weight": 30.00
+                },
+                {
+                    "file": "data/test.png",
+                    "weight": 70.00
+                }
+            ]
+        }
+    }
+    # Act
+    response = parse_request_body(body)
+
+    # Assert
+    assert response.endpoint == "localhost"
