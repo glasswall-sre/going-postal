@@ -7,6 +7,7 @@ verify_ssl = true
 pylint = "*"
 yapf = "*"
 pipenv-to-requirements = "*"
+pytest = "*"
 
 [packages]
 azure-functions = "*"
