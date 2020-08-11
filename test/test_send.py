@@ -59,11 +59,11 @@ def test_select_random_attachment():
             "distribution" : [
                 {
                     "file": "data/test.png",
-                    "weight": 10.00
+                    "weight": 20.00
                 },
                 {
                     "file": "data/test.bmp",
-                    "weight": 90.00
+                    "weight": 80.00
                 }
             ]
         }
