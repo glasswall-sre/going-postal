@@ -19,17 +19,17 @@ to be used with concurrency for load testing.
     "recipient": "someone@example.com",
     "sender": "someone_else@example.com",
     "load": {
-            "distribution" : [
-                {
-                    "file": "data/test.png",
-                    "weight": 10.00
-                },
-                {
-                    "file": "data/test.bmp",
-                    "weight": 90.00
-                }
-            ]
-        }
+        "distribution" : [
+            {
+                "file": "data/test.png",
+                "weight": 10.00
+            },
+            {
+                "file": "data/test.bmp",
+                "weight": 90.00
+            }
+        ]
+    }
 }
 ```
 All fields are required, with the exception of:
