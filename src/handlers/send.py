@@ -15,8 +15,7 @@ import os
 import random
 
 
-# Schema
-
+# Schema--------------------------------------------------------------------
 class Disitribution:
     def __init__(self, file: str, weight: float):
         self.file = file
@@ -96,6 +95,7 @@ def parse_request_body(body: Any) -> RequestBody:
 
 DATA_DIRECTORY = "data"
 
+# Attachment_Randomiser ------------------------------------------------
 class AttachmentRandomiser:
     def __init__(self):
         self.attachments_sent = 0
@@ -154,7 +154,7 @@ class AttachmentRandomiser:
         return self.curr_selected_attachment_count
 
 
-    def select_random_attachment(self):
+    def select_random_attachment(self) -> str:
         if self.curr_selected == None:
             self.curr_selected = self.files_loaded[0]['name']
         self.__running_total_file_weight = self.__running_total_file_weight
@@ -163,7 +163,7 @@ class AttachmentRandomiser:
             if r >= self.__running_total_file_weight:
                 self.curr_selected = item.file
             self.__running_total_file_weight += item.weight
-        self.curr_selected_size = [x for x in self.files_loaded if x['name'] == self.curr_selected][0]
+        self.curr_selected_size = [x for x in self.files_loaded if x['name'] == self.curr_selected][0]['size']
         return self.curr_selected
 
 

@@ -60,11 +60,11 @@ def test_select_random_attachment():
             "distribution" : [
                 {
                     "file": "data/test.png",
-                    "weight": 20.00
+                    "weight": 00.00
                 },
                 {
                     "file": "data/test.bmp",
-                    "weight": 80.00
+                    "weight": 100.00
                 }
             ],
             "attachment_count": [0, 100]
@@ -74,18 +74,8 @@ def test_select_random_attachment():
     ar = AttachmentRandomiser()
     ar.import_distribution(response.load.distribution)
     # Act
-    selected = {}
-    for i in range(100):
-        attachment = ar.select_random_attachment()
-
-        if not attachment in selected:
-            selected[attachment] = 0
-
-        selected[attachment] += 1
-    # Assert
-    if selected["data/test.png"] == None:
-        selected["data/test.png"] = 0
-    assert selected.get("data/test.png") < selected.get("data/test.bmp")
+    selected = ar.select_random_attachment()
+    assert selected == "data/test.bmp"
 
 
 def test_parse_request_body():
@@ -211,3 +201,42 @@ def test_import_attachment_count_3():
     count = ar.select_random_attachment_count()
     # Assert
     assert count == 2
+
+def test_response():
+    # Arrange
+    body = {
+        "endpoint":"localhost",
+        "port":25,
+        "tenant_ids":["test", "test2"],
+        "sender":"test@test.com",
+        "recipient":"test@test.com",
+        "load":{
+            "distribution" : [
+                {
+                    "file": "data/test.png",
+                    "weight": 30.00
+                },
+                {
+                    "file": "data/test.png",
+                    "weight": 70.00
+                }
+            ],
+            "attachment_count": [0, 0, 100]
+        }
+    }
+    req_body = parse_request_body(body)
+    ar = AttachmentRandomiser()
+    ar.import_distribution( req_body.load.distribution )
+    ar.import_attachment_weights(req_body.load.attachment_count)
+    sent_items = [
+
+    ]
+    attachments = []
+    for i in range( ar.select_random_attachment_count() ):
+        attachment = ar.select_random_attachment()
+        attachments.append( attachment )
+        sent_items.append({
+        })
+    assert 1 == 1 
+
+    
