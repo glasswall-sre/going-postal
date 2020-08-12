@@ -16,7 +16,7 @@ def test_load_all_attachments_to_memory():
     # Act
     attachment_randomiser.load_all_attachments_to_memory()
     # Assert
-    assert len(attachment_randomiser.files_loaded) == 5
+    assert len(attachment_randomiser.files_loaded) == 18
 
 
 def test_import_distribution():
@@ -93,7 +93,7 @@ def test_parse_request_body():
                     "weight": 30.00
                 },
                 {
-                    "file": "data/test.png",
+                    "file": "data/test.bmp",
                     "weight": 70.00
                 }
             ],
@@ -121,7 +121,7 @@ def test_import_attachment_count():
                     "weight": 30.00
                 },
                 {
-                    "file": "data/test.png",
+                    "file": "data/test.bmp",
                     "weight": 70.00
                 }
             ],
@@ -153,7 +153,7 @@ def test_import_attachment_count_2():
                     "weight": 30.00
                 },
                 {
-                    "file": "data/test.png",
+                    "file": "data/test.bmp",
                     "weight": 70.00
                 }
             ],
@@ -185,7 +185,7 @@ def test_import_attachment_count_3():
                     "weight": 30.00
                 },
                 {
-                    "file": "data/test.png",
+                    "file": "data/test.bmp",
                     "weight": 70.00
                 }
             ],
@@ -202,7 +202,7 @@ def test_import_attachment_count_3():
     # Assert
     assert count == 2
 
-def test_response():
+def test_10_attachments_equal_weight():
     # Arrange
     body = {
         "endpoint":"localhost",
@@ -213,15 +213,47 @@ def test_response():
         "load":{
             "distribution" : [
                 {
-                    "file": "data/test.png",
-                    "weight": 30.00
+                    "file": "data/test.bmp",
+                    "weight": 10.00
                 },
                 {
-                    "file": "data/test.png",
-                    "weight": 70.00
+                    "file": "data/test.doc",
+                    "weight": 10.00
+                },
+                {
+                    "file": "data/test.docx",
+                    "weight": 10.00
+                },
+                {
+                    "file": "data/test.emf",
+                    "weight": 10.00
+                },
+                {
+                    "file": "data/test.gif",
+                    "weight": 10.00
+                },
+                {
+                    "file": "data/test.jpg",
+                    "weight": 10.00
+                },
+                {
+                    "file": "data/test.mp3",
+                    "weight": 10.00
+                },
+                {
+                    "file": "data/test.mp4",
+                    "weight": 10.00
+                },
+                {
+                    "file": "data/test.mpg",
+                    "weight": 10.00
+                },
+                {
+                    "file": "data/test.pdf",
+                    "weight": 10.00
                 }
             ],
-            "attachment_count": [0, 0, 100]
+            "attachment_count": [0, 0, 0, 0, 0 , 0, 0, 100]
         }
     }
     req_body = parse_request_body(body)
@@ -239,4 +271,6 @@ def test_response():
         })
     assert 1 == 1 
 
-    
+def test_float_weights():
+    # TODO
+    assert 1 == 1
