@@ -15,17 +15,16 @@ import os
 import random
 
 
-# Schema
+# Schema--------------------------------------------------------------------
 class Disitribution:
     def __init__(self, file: str, weight: float):
         self.file = file
         self.weight = weight
 
-
 class Load:
-    def __init__(self, distribution: str):
+    def __init__(self, distribution: str, attachment_count):
         self.distribution = distribution
-
+        self.attachment_count = attachment_count
 
 class RequestBody:
     """The body of a request to the send endpoint.
@@ -57,9 +56,9 @@ class DisitributionSchema(Schema):
     def make_request_body(self, data, **kwargs):
         return Disitribution(**data)
 
-
 class LoadSchema(Schema):
     distribution = fields.List(fields.Nested( DisitributionSchema))
+    attachment_count = fields.List(fields.Int())
 
     @post_load
     def make_request_body(self, data, **kwargs):
@@ -96,14 +95,23 @@ def parse_request_body(body: Any) -> RequestBody:
 
 DATA_DIRECTORY = "data"
 
+# Attachment_Randomiser ------------------------------------------------
 class AttachmentRandomiser:
     def __init__(self):
         self.attachments_sent = 0
         self.files_loaded = []
         self.total_weight = 0
-        self.curr_selected = None
         self.distribution = None
-        self.running_total_weight = 0
+        # Currently Selected
+        self.curr_selected = None
+        self.curr_selected_size = None
+        # Attachment Count
+        self.attachment_count = []
+        self.attachment_count_total_weight = 0
+        self.curr_selected_attachment_count = None
+        # Private
+        self.__running_total_file_weight = 0
+        self.__running_total_attach_count_weight = 0
 
 
     def load_all_attachments_to_memory(self):
@@ -119,17 +127,43 @@ class AttachmentRandomiser:
         self.distribution = distribution
         for item in distribution:
             self.total_weight += item.weight
-            self.files_loaded.append(item.file)
+            file_info = {
+                'name': item.file,
+                'size': os.path.getsize(item.file)
+            }
+            self.files_loaded.append(file_info)
 
-    def select_random_attachment(self):
+    def import_attachment_weights(self, attachment_count_weights: List[int]):
+        self.attachment_count = attachment_count_weights
+        total = 0
+        for item in attachment_count_weights:
+            total += item
+        self.attachment_count_total_weight = total
+
+    def select_random_attachment_count(self) -> int:
+        if self.curr_selected_attachment_count == None:
+            self.curr_selected_attachment_count = self.attachment_count[0]
+        self.__running_total_attach_count_weight = self.__running_total_attach_count_weight
+        i = 0
+        for item in self.attachment_count:
+            r = random.randint(0, self.__running_total_attach_count_weight + item)
+            if r >= self.__running_total_attach_count_weight:
+                self.curr_selected_attachment_count = i
+            self.__running_total_attach_count_weight += item
+            i += 1
+        return self.curr_selected_attachment_count
+
+
+    def select_random_attachment(self) -> str:
         if self.curr_selected == None:
-            self.curr_selected = self.files_loaded[0]
-        self.running_total_weight = self.running_total_weight
+            self.curr_selected = self.files_loaded[0]['name']
+        self.__running_total_file_weight = self.__running_total_file_weight
         for item in self.distribution:
-            r = random.randint(0, self.running_total_weight + item.weight )
-            if r >= self.running_total_weight:
+            r = random.randint(0, self.__running_total_file_weight + item.weight )
+            if r >= self.__running_total_file_weight:
                 self.curr_selected = item.file
-            self.running_total_weight += item.weight
+            self.__running_total_file_weight += item.weight
+        self.curr_selected_size = [x for x in self.files_loaded if x['name'] == self.curr_selected][0]['size']
         return self.curr_selected
 
 
@@ -140,12 +174,16 @@ def generate_subject():
 def create_email_message(tenant_id: str,
                          sender: str,
                          recipient: str,
-                         attachment: str) -> EmailMessage:
+                         attachments: List[str]) -> EmailMessage:
     """Create the email message to send."""
     msg = message.Message("This is a test email",
                           to=[recipient],
                           from_addresses=[sender],
-                          date=datetime.now()).attach(attachment)
+                          date=datetime.now())
+
+    for attachment in attachments:
+        msg.attach(attachment)
+
     msg.headers["X-FileTrust-Tenant"] = tenant_id
     return msg.as_mime()
 
@@ -186,15 +224,20 @@ async def main(req: func.HttpRequest) -> func.HttpResponse:
     # Select Attachment
     ar = AttachmentRandomiser()
     ar.import_distribution( req_body.load.distribution )
-    attachment = ar.select_random_attachment()
-    logging.info(f"Attaching FILE... {attachment}")
+    ar.import_attachment_weights(req_body.load.attachment_count)
+    attachments = []
+    for i in range( ar.select_random_attachment_count() ):
+        attachment = ar.select_random_attachment()
+        attachments.append( attachment )
+        logging.info(f"Attaching file... {attachment} at size... {ar.curr_selected_size}")
 
+    
     for tenant_id in req_body.tenant_ids:
         logging.info(f"Creating email to send to {tenant_id}...")
         msg_to_send = create_email_message(tenant_id,
                                         req_body.sender.email,
                                         req_body.recipient.email,
-                                        attachment)
+                                        attachments)
 
         logging.info("Sending email to endpoint '%s:%d'...", req_body.endpoint,
                     req_body.port)

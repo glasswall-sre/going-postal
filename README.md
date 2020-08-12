@@ -28,7 +28,8 @@ to be used with concurrency for load testing.
                 "file": "data/test.bmp",
                 "weight": 90.00
             }
-        ]
+        ],
+        "attachment_count": [25, 70, 5] //Position in index represents attachment count
     }
 }
 ```
