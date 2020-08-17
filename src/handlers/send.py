@@ -7,7 +7,7 @@ from sremail import message, address
 # Subject Generator 
 import uuid
 # Schema
-from typing import List, Any
+from typing import List, Any, Dict
 from marshmallow import Schema, fields, post_load, EXCLUDE, ValidationError, validate
 from sremail import address
 # Attachment Randomiser
@@ -17,12 +17,12 @@ import random
 
 # Schema--------------------------------------------------------------------
 class Disitribution:
-    def __init__(self, file: str, weight: float):
+    def __init__(self, file: str, weight: int):
         self.file = file
         self.weight = weight
 
 class Load:
-    def __init__(self, distribution: str, attachment_count):
+    def __init__(self, distribution: List[Disitribution], attachment_count):
         self.distribution = distribution
         self.attachment_count = attachment_count
 
@@ -50,14 +50,14 @@ class RequestBody:
 
 class DisitributionSchema(Schema):
     file = fields.Str(required=True)
-    weight = fields.Float(required=True)
+    weight = fields.Int(required=True)
 
     @post_load
     def make_request_body(self, data, **kwargs):
         return Disitribution(**data)
 
 class LoadSchema(Schema):
-    distribution = fields.List(fields.Nested( DisitributionSchema))
+    distribution = fields.List(fields.Nested( DisitributionSchema ))
     attachment_count = fields.List(fields.Int())
 
     @post_load
