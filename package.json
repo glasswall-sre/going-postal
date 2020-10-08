@@ -9,6 +9,11 @@
   "author": "",
   "license": "ISC",
   "devDependencies": {
-    "serverless-azure-functions": "^2.0.9"
+    "serverless-azure-functions": "^2.1.0"
+  },
+  "dependencies": {
+    "bl": "^4.0.3",
+    "lodash": "^4.17.20",
+    "yargs-parser": "^20.2.1"
   }
 }
