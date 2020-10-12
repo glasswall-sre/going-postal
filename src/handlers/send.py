@@ -1,4 +1,5 @@
 from datetime import datetime
+from glob import glob
 from email.message import EmailMessage
 import logging
 import aiosmtplib
@@ -95,6 +96,7 @@ def parse_request_body(body: Any) -> RequestBody:
 
 DATA_DIRECTORY = "data"
 
+
 # Attachment_Randomiser ------------------------------------------------
 class AttachmentRandomiser:
     def __init__(self):
@@ -113,12 +115,11 @@ class AttachmentRandomiser:
         self.__running_total_file_weight = 0
         self.__running_total_attach_count_weight = 0
 
-
     def load_all_attachments_to_memory(self):
         # Load Everything from data
         result = os.path.isdir(DATA_DIRECTORY)
         if result == True:
-            items = os.listdir(DATA_DIRECTORY)
+            items = [y for x in os.walk(DATA_DIRECTORY) for y in glob(os.path.join(x[0], '*.*'))]
             self.files_loaded = items
         else:
             raise OSError("data directory not found")
@@ -152,7 +153,6 @@ class AttachmentRandomiser:
             self.__running_total_attach_count_weight += item
             i += 1
         return self.curr_selected_attachment_count
-
 
     def select_random_attachment(self) -> str:
         if self.curr_selected == None:
@@ -223,21 +223,20 @@ async def main(req: func.HttpRequest) -> func.HttpResponse:
 
     # Select Attachment
     ar = AttachmentRandomiser()
-    ar.import_distribution( req_body.load.distribution )
+    ar.import_distribution(req_body.load.distribution)
     ar.import_attachment_weights(req_body.load.attachment_count)
     attachments = []
-    for i in range( ar.select_random_attachment_count() ):
+    for i in range(ar.select_random_attachment_count()):
         attachment = ar.select_random_attachment()
-        attachments.append( attachment )
+        attachments.append(attachment)
         logging.info(f"Attaching file... {attachment} at size... {ar.curr_selected_size}")
 
-    
     for tenant_id in req_body.tenant_ids:
         logging.info(f"Creating email to send to {tenant_id}...")
         msg_to_send = create_email_message(tenant_id,
-                                        req_body.sender.email,
-                                        req_body.recipient.email,
-                                        attachments)
+                                            req_body.sender.email,
+                                            req_body.recipient.email,
+                                            attachments)
 
         logging.info("Sending email to endpoint '%s:%d'...", req_body.endpoint,
                     req_body.port)
