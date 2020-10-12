@@ -102,6 +102,9 @@ local.settings.json
 !.vscode/extensions.json
 *.code-workspace
 
+### Pycharm ###
+.idea
+
 # Python
 __pycache__/
 
