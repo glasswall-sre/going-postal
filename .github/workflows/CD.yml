@@ -30,7 +30,7 @@ jobs:
       - name: Serverless deploy to westeurope
         uses: serverless/github-action@v1.53.0
         with:
-          args: deploy --region westeurope
+          args: deploy --region westeurope --azure_storage_connection_string ${{ secrets.AZURE_STORAGE_CONNECTION_STRING }}
         env:
           AZURE_CLIENT_ID: ${{ secrets.PULUMI_AZURE_CLIENT_ID }}
           AZURE_CLIENT_SECRET: ${{ secrets.PULUMI_AZURE_CLIENT_SECRET }}
@@ -39,7 +39,7 @@ jobs:
       - name: Serverless deploy to uksouth
         uses: serverless/github-action@v1.53.0
         with:
-          args: deploy --region uksouth
+          args: deploy --region uksouth --azure_storage_connection_string ${{ secrets.AZURE_STORAGE_CONNECTION_STRING }}
         env:
           AZURE_CLIENT_ID: ${{ secrets.PULUMI_AZURE_CLIENT_ID }}
           AZURE_CLIENT_SECRET: ${{ secrets.PULUMI_AZURE_CLIENT_SECRET }}

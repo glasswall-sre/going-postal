@@ -4,6 +4,8 @@ provider:
   name: azure
   region: ${opt:region}
   runtime: python3.8 # python3.7 or python3.8 available
+  environment:
+    AZURE_STORAGE_CONNECTION_STRING: ${opt:azure_storage_connection_string}
   # prefix: "sample"  # prefix of generated resource name
   # subscriptionId: A356AC8C-E310-44F4-BF85-C7F29044AF99
   # stage: dev
