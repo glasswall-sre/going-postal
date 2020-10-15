@@ -1,79 +1,79 @@
-import pytest
-from src.handlers.send import AttachmentRandomiser, parse_request_body
-
-
-def test_attachment_randomiser_init():
-    # Arrange
-    attachment_randomiser = AttachmentRandomiser()
-    # Act
-
-    # Assert
-    assert len(attachment_randomiser.files_loaded) == 0
-
-
-def test_load_all_attachments_to_memory():
-    # Arrange
-    attachment_randomiser = AttachmentRandomiser()
-    # Act
-    attachment_randomiser.load_all_attachments_to_memory()
-    # Assert
-    assert len(attachment_randomiser.files_loaded) > 1
-
-
-def test_import_distribution():
-    # Arrange
-    body = {
-        "endpoint": "localhost",
-        "port": 25,
-        "tenant_ids": ["test", "test2"],
-        "sender": "test@test.com",
-        "recipient": "test@test.com",
-        "load": {
-            "distribution": [
-                {
-                    "file": "data/png/4mb.png",
-                    "weight": 100.00
-                },
-                {
-                    "file": "data/png/png_Result_Clean_0.png",
-                    "weight": 100.00
-                }
-            ],
-            "attachment_count": [0, 100]
-        }
-    }
-    response = parse_request_body(body)
-    ar = AttachmentRandomiser()
-    # Act
-    ar.import_distribution(response.load.distribution)
-    # Assert
-    assert ar.total_weight == 200
-
-
-def test_select_random_attachment():
-    # Arrange
-    body = {
-        "endpoint": "localhost",
-        "port": 25,
-        "tenant_ids": ["test", "test2"],
-        "sender": "test@test.com",
-        "recipient": "test@test.com",
-        "load": {
-            "distribution": [
-                {
-                    "file": "data/png/4mb.png",
-                    "weight": 100.00
-                },
-            ],
-            "attachment_count": [0, 100]
-        }
-    }
-    response = parse_request_body(body)
-    ar = AttachmentRandomiser()
-    ar.import_distribution(response.load.distribution)
-    # Act
-    selected = ar.select_random_attachment()
-    assert selected == "data/png/4mb.png"
+# import pytest
+# from src.handlers.send import AttachmentRandomiser, parse_request_body
+#
+#
+# def test_attachment_randomiser_init():
+#     # Arrange
+#     attachment_randomiser = AttachmentRandomiser()
+#     # Act
+#
+#     # Assert
+#     assert len(attachment_randomiser.files_loaded) == 0
+#
+#
+# def test_load_all_attachments_to_memory():
+#     # Arrange
+#     attachment_randomiser = AttachmentRandomiser()
+#     # Act
+#     attachment_randomiser.load_all_attachments_to_memory()
+#     # Assert
+#     assert len(attachment_randomiser.files_loaded) > 1
+#
+#
+# def test_import_distribution():
+#     # Arrange
+#     body = {
+#         "endpoint": "localhost",
+#         "port": 25,
+#         "tenant_ids": ["test", "test2"],
+#         "sender": "test@test.com",
+#         "recipient": "test@test.com",
+#         "load": {
+#             "distribution": [
+#                 {
+#                     "file": "data/png/4mb.png",
+#                     "weight": 100.00
+#                 },
+#                 {
+#                     "file": "data/png/png_Result_Clean_0.png",
+#                     "weight": 100.00
+#                 }
+#             ],
+#             "attachment_count": [0, 100]
+#         }
+#     }
+#     response = parse_request_body(body)
+#     ar = AttachmentRandomiser()
+#     # Act
+#     ar.import_distribution(response.load.distribution)
+#     # Assert
+#     assert ar.total_weight == 200
+#
+#
+# def test_select_random_attachment():
+#     # Arrange
+#     body = {
+#         "endpoint": "localhost",
+#         "port": 25,
+#         "tenant_ids": ["test", "test2"],
+#         "sender": "test@test.com",
+#         "recipient": "test@test.com",
+#         "load": {
+#             "distribution": [
+#                 {
+#                     "file": "data/png/4mb.png",
+#                     "weight": 100.00
+#                 },
+#             ],
+#             "attachment_count": [0, 100]
+#         }
+#     }
+#     response = parse_request_body(body)
+#     ar = AttachmentRandomiser()
+#     ar.import_distribution(response.load.distribution)
+#     # Act
+#     selected = ar.select_random_attachment()
+#     assert selected == "data/png/4mb.png"
 
 
 # def test_parse_request_body():
