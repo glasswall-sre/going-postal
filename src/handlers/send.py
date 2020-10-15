@@ -6,8 +6,7 @@ from email.message import EmailMessage
 import logging
 import aiosmtplib
 import azure.functions as func
-from azure.core.paging import ItemPaged
-from azure.storage.blob import BlobServiceClient, ContainerClient, BlobProperties
+from azure.storage.blob import BlobServiceClient, ContainerClient
 from azure.storage.blob.aio import BlobClient
 from sremail import message
 # Subject Generator 
@@ -186,7 +185,7 @@ class BlobStorage:
     def container(self, container_name: str) -> ContainerClient:
         return self.blob_service_client.get_container_client(container_name)
 
-    def get_blob_properties(self, container_name: str) -> ItemPaged[BlobProperties]:
+    def get_blob_properties(self, container_name: str):
         return self.container(container_name).list_blobs()
 
     @staticmethod
