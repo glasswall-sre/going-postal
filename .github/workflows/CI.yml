@@ -24,7 +24,7 @@ jobs:
           pipenv install --dev
       - name: Run Unit Test
         run: |
-          pipenv run python -m pytest
+          pipenv run python -m pytest test
 
   sonarcloud:
     runs-on: ubuntu-latest

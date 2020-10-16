@@ -8,6 +8,7 @@ pylint = "*"
 yapf = "*"
 pipenv-to-requirements = "*"
 pytest = "*"
+azure-storage-blob = "*"
 
 [packages]
 azure-functions = "*"
