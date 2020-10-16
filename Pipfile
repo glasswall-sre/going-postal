@@ -15,6 +15,7 @@ azure-functions-worker = "*"
 aiosmtplib = "*"
 marshmallow = "*"
 sremail = "*"
+pytest = "*"
 
 [scripts]
 freeze = "pipenv_to_requirements -f"
