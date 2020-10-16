@@ -1,10 +1,14 @@
+import asyncio
+import tempfile
 from datetime import datetime
 from glob import glob
 from email.message import EmailMessage
 import logging
 import aiosmtplib
 import azure.functions as func
-from sremail import message, address
+from azure.storage.blob import BlobServiceClient, ContainerClient
+from azure.storage.blob.aio import BlobClient
+from sremail import message
 # Subject Generator 
 import uuid
 # Schema
@@ -15,17 +19,21 @@ from sremail import address
 import os
 import random
 
+CONNECTION_STR = os.environ.get('AZURE_STORAGE_CONNECTION_STRING')
+
 
 # Schema--------------------------------------------------------------------
-class Disitribution:
+class Distribution:
     def __init__(self, file: str, weight: int):
         self.file = file
         self.weight = weight
 
+
 class Load:
-    def __init__(self, distribution: List[Disitribution], attachment_count):
+    def __init__(self, distribution: List[Distribution], attachment_count):
         self.distribution = distribution
         self.attachment_count = attachment_count
+
 
 class RequestBody:
     """The body of a request to the send endpoint.
@@ -38,6 +46,7 @@ class RequestBody:
         recipient (Address): The email to send to.
         sender (Address): The email to send from.
     """
+
     def __init__(self, endpoint: str, port: int, timeout: float,
                  tenant_ids: List[str], recipient: address.Address,
                  sender: address.Address, load: Load) -> None:
@@ -49,16 +58,18 @@ class RequestBody:
         self.sender = sender
         self.load = load
 
-class DisitributionSchema(Schema):
+
+class DistributionSchema(Schema):
     file = fields.Str(required=True)
     weight = fields.Int(required=True)
 
     @post_load
     def make_request_body(self, data, **kwargs):
-        return Disitribution(**data)
+        return Distribution(**data)
+
 
 class LoadSchema(Schema):
-    distribution = fields.List(fields.Nested( DisitributionSchema ))
+    distribution = fields.List(fields.Nested(DistributionSchema))
     attachment_count = fields.List(fields.Int())
 
     @post_load
@@ -124,7 +135,7 @@ class AttachmentRandomiser:
         else:
             raise OSError("data directory not found")
 
-    def import_distribution(self, distribution: List[Disitribution]):
+    def import_distribution(self, distribution: List[Distribution]):
         self.distribution = distribution
         for item in distribution:
             self.total_weight += item.weight
@@ -159,12 +170,34 @@ class AttachmentRandomiser:
             self.curr_selected = self.files_loaded[0]['name']
         self.__running_total_file_weight = self.__running_total_file_weight
         for item in self.distribution:
-            r = random.randint(0, self.__running_total_file_weight + item.weight )
+            r = random.randint(0, self.__running_total_file_weight + item.weight)
             if r >= self.__running_total_file_weight:
                 self.curr_selected = item.file
             self.__running_total_file_weight += item.weight
         self.curr_selected_size = [x for x in self.files_loaded if x['name'] == self.curr_selected][0]['size']
         return self.curr_selected
+
+
+class BlobStorage:
+    def __init__(self):
+        self.blob_service_client = BlobServiceClient.from_connection_string(CONNECTION_STR)
+
+    def container(self, container_name: str) -> ContainerClient:
+        return self.blob_service_client.get_container_client(container_name)
+
+    def get_blob_properties(self, container_name: str):
+        return self.container(container_name).list_blobs()
+
+    @staticmethod
+    async def save_blob_property(blob_container, blob_name, directory):
+        blob_client = BlobClient.from_connection_string(conn_str=CONNECTION_STR, container_name=blob_container,
+                                                        blob_name=blob_name)
+        path = f"{directory}/{blob_name.split('/')[1]}"
+        with open(path, "wb") as blob:
+            stream = await blob_client.download_blob()
+            data = await stream.readall()
+            blob.write(data)
+        return Distribution(path, os.path.getsize(path))
 
 
 def generate_subject():
@@ -188,9 +221,30 @@ def create_email_message(tenant_id: str,
     return msg.as_mime()
 
 
+async def get_attachments(tmpdir: str, attachments: List[Distribution]):
+    tasks = []
+    for attachment in attachments:
+        tasks.append(
+            asyncio.create_task(
+                BlobStorage.save_blob_property('fileattachments', attachment.file, tmpdir)
+            )
+        )
+    done, _ = await asyncio.wait(tasks, return_when=asyncio.FIRST_EXCEPTION)
+    attachments = []
+    for task in done:
+        err = task.exception()
+        if err is not None:
+            raise err
+        attachments.append(task.result())
+    return attachments
+
+
 async def main(req: func.HttpRequest) -> func.HttpResponse:
     """Entry point of the Azure function."""
     logging.info('Python HTTP trigger function processed a request.')
+
+    if not CONNECTION_STR:
+        raise EnvironmentError('AZURE_STORAGE_CONNECTION_STRING environment variable must be set.')
 
     # parse the request body
     try:
@@ -222,38 +276,34 @@ async def main(req: func.HttpRequest) -> func.HttpResponse:
         return func.HttpResponse(str(err), status_code=502)
 
     # Select Attachment
-    ar = AttachmentRandomiser()
-    ar.import_distribution(req_body.load.distribution)
-    ar.import_attachment_weights(req_body.load.attachment_count)
-    attachments = []
-    for i in range(ar.select_random_attachment_count()):
-        attachment = ar.select_random_attachment()
-        attachments.append(attachment)
-        logging.info(f"Attaching file... {attachment} at size... {ar.curr_selected_size}")
+    with tempfile.TemporaryDirectory() as tmpdir:
+        asyncio.get_running_loop().set_exception_handler(lambda loop, context: "Error")
+        attachments = await get_attachments(tmpdir, req_body.load.distribution)
+        ar = AttachmentRandomiser()
+        ar.import_distribution(attachments)
+        ar.import_attachment_weights(req_body.load.attachment_count)
+        attachments = []
+        for i in range(ar.select_random_attachment_count()):
+            attachment = ar.select_random_attachment()
+            attachments.append(attachment)
+            logging.info(f"Attaching file... {attachment} at size... {ar.curr_selected_size}")
 
-    for tenant_id in req_body.tenant_ids:
-        logging.info(f"Creating email to send to {tenant_id}...")
-        msg_to_send = create_email_message(tenant_id,
-                                            req_body.sender.email,
-                                            req_body.recipient.email,
-                                            attachments)
+        for tenant_id in req_body.tenant_ids:
+            logging.info(f"Creating email to send to {tenant_id}...")
+            msg_to_send = create_email_message(tenant_id,
+                                               req_body.sender.email,
+                                               req_body.recipient.email,
+                                               attachments)
 
-        logging.info("Sending email to endpoint '%s:%d'...", req_body.endpoint,
-                    req_body.port)
-        try:
-            await smtp_conn.send_message(msg_to_send)
-        except Exception as err:
-            # if there was some error sending, return a 502 bad gateway
-            return func.HttpResponse(str(err), status_code=502)
+            logging.info("Sending email to endpoint '%s:%d'...", req_body.endpoint,
+                         req_body.port)
+            try:
+                await smtp_conn.send_message(msg_to_send)
+            except Exception as err:
+                # if there was some error sending, return a 502 bad gateway
+                return func.HttpResponse(str(err), status_code=502)
 
     # sending the message was a success!
     return func.HttpResponse(
         f"Successfully sent to '{req_body.endpoint}:{req_body.port}'",
         status_code=200)
-
-
-
-
-
-
-
