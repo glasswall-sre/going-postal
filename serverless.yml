@@ -38,4 +38,4 @@ functions:
         x-azure-settings:
           methods:
             - POST
-          authLevel: anonymous
+          authLevel: function
