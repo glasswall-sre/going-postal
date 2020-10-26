@@ -14,8 +14,6 @@ provider:
 plugins:
   - serverless-azure-functions
 package:
-  include:
-    - data/**
   exclude:
     - env/**
     - .env/**
