@@ -1,4 +1,5 @@
 import asyncio
+import sys
 import tempfile
 from datetime import datetime
 from glob import glob
@@ -18,6 +19,10 @@ from sremail import address
 # Attachment Randomiser
 import os
 import random
+
+import importlib
+
+importlib.reload(sys.modules['azure'])
 
 CONNECTION_STR = os.environ.get('AZURE_STORAGE_CONNECTION_STRING')
 
