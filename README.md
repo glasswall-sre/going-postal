@@ -55,7 +55,7 @@ All fields are required, with the exception of:
 ### Quick start
 1. Clone this repo.
 2. Set up your pipenv by running `pipenv sync --dev`.
-3. Launch the function with `pipenv run serverless offline --region uksouth`.
+3. Launch the function with `pipenv run serverless offline --region uksouth --azure_storage_connection_string $AZURE_STORAGE_CONNECTION_STRING`.
 4. Edit the code and test. I use [HTTPie](https://httpie.org/) for making requests.
 5. In order to have something to test with, you can run a postfix blackhole mail server on port 25 using Docker, with: `docker run --name blackhole -d -p 25:25 simap/smtpblackhole`.
 6. Now, using HTTPie to make a request to the locally running function: `http post http://localhost:7071/api/send endpoint=localhost port=25 tenant_id=test sender=test@test.com recipient=test@test.com`.
