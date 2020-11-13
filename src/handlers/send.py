@@ -283,16 +283,11 @@ async def main(req: func.HttpRequest) -> func.HttpResponse:
     # Select Attachment
     with tempfile.TemporaryDirectory() as tmpdir:
         asyncio.get_running_loop().set_exception_handler(lambda loop, context: "Error")
-        attachments = await get_attachments(tmpdir, req_body.load.distribution)
-        ar = AttachmentRandomiser()
-        ar.import_distribution(attachments)
-        ar.import_attachment_weights(req_body.load.attachment_count)
+        loaded_attachments = await get_attachments(tmpdir, req_body.load.distribution)
         attachments = []
-        for i in range(ar.select_random_attachment_count()):
-            attachment = ar.select_random_attachment()
-            attachments.append(attachment)
-            logging.info(f"Attaching file... {attachment} at size... {ar.curr_selected_size}")
-
+        for attachment in loaded_attachments:
+            attachments.append(attachment.file)
+            logging.info(f"Attaching file... {attachment.file} at size... {attachment.weight}")
         for tenant_id in req_body.tenant_ids:
             logging.info(f"Creating email to send to {tenant_id}...")
             msg_to_send = create_email_message(tenant_id,
