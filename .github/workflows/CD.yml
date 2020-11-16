@@ -1,4 +1,4 @@
-name: cd
+name: CD Pipeline
 
 on:
   release:
